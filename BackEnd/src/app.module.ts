@@ -7,6 +7,9 @@ import { UserModule } from './module/user/user.module';
 import { AuthModule } from './module/auth/auth.module';
 import { RoleModule } from './module/role/role.module';
 import { PermissionModule } from './module/permission/permission.module';
+import { RoomModule } from './module/room/room.module';
+import { HotelModule } from './module/hotel/hotel.module';
+import { HotelLocationModule } from './module/hotel_location/hotel_location.module';
 
 @Module({
   imports: [
@@ -15,6 +18,9 @@ import { PermissionModule } from './module/permission/permission.module';
     AuthModule,
     RoleModule,
     PermissionModule,
+    RoomModule,
+    HotelModule,
+    HotelLocationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
