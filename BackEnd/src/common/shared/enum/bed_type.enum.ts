@@ -1,0 +1,3 @@
+export enum EBedType {
+    SINGLE, DOUBLE, QUEEN, KING, TWIN, BUNK, SOFA, ROLLAWAY, TATAMI
+}
