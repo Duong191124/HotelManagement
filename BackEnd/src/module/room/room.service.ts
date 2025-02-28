@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { RoomEntity } from 'src/common/shared/entities/room.entity';
 import { HotelLocationEntity } from 'src/common/shared/entities/hotel_location.entity';
 import { CustomizeException } from 'src/common/shared/exception/customize.exception';
+import { ImageEntity } from 'src/common/shared/entities/image.entity';
 
 @Injectable()
 export class RoomService {
@@ -12,7 +13,9 @@ export class RoomService {
         @Inject('ROOM_REPOSITORY')
         private readonly roomRepository: Repository<RoomEntity>,
         @Inject('HOTEL_LOCATION_REPOSITORY')
-        private readonly hotelLocationRepository: Repository<HotelLocationEntity>
+        private readonly hotelLocationRepository: Repository<HotelLocationEntity>,
+        @Inject('IMAGE_REPOSITORY')
+        private readonly imageRepository: Repository<ImageEntity>
     ) { }
 
     async getAll() {
@@ -36,5 +39,17 @@ export class RoomService {
         }
         const newRoom = this.roomRepository.create({ ...body, hotel_location: findHotelLocation });
         return this.roomRepository.save(newRoom);
+    }
+
+    async saveRoomImages(roomId: number, url: string[]) {
+        const findRoomId = await this.roomRepository.findOneBy({ id: roomId });
+        if (!findRoomId) {
+            throw new CustomizeException(`Can not find this roomId ${roomId} in database`, 400);
+        }
+        const newImages = url.map(url => this.imageRepository.create({
+            room: findRoomId,
+            url
+        }));
+        return this.imageRepository.save(newImages);
     }
 }

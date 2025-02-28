@@ -1,6 +1,7 @@
 import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import { EUser } from "../enum/user.enum";
 import { RoleEntity } from "./role.entity";
+import { Exclude } from "class-transformer";
 
 @Entity()
 export class UserEntity {
@@ -13,6 +14,7 @@ export class UserEntity {
     @Column({ unique: true })
     username: string;
 
+    @Exclude()
     @Column()
     password: string;
 

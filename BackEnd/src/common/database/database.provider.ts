@@ -14,6 +14,7 @@ export const databaseProviders = [
                 password: configService.get<string>('DB_PASSWORD'),
                 database: configService.get<string>('DB_NAME'),
                 entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+                timezone: "UTC",
                 synchronize: true, // ❗ Chỉ dùng trong dev, production nên tắt
             });
 
