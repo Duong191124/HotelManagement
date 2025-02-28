@@ -4,11 +4,17 @@ import { RoomController } from './room.controller';
 import { DatabaseModule } from 'src/common/database/database.module';
 import { roomProvider } from 'src/common/repository/room.provider';
 import { hotelLocationProvider } from 'src/common/repository/hotel_location.provider';
+import { imageProvider } from 'src/common/repository/image.provider';
 
 @Module({
   imports: [DatabaseModule],
   controllers: [RoomController],
-  providers: [RoomService, ...roomProvider, ...hotelLocationProvider],
+  providers: [
+    RoomService,
+    ...roomProvider,
+    ...hotelLocationProvider,
+    ...imageProvider
+  ],
   exports: [RoomService]
 })
 export class RoomModule { }

@@ -10,6 +10,7 @@ import { PermissionModule } from './module/permission/permission.module';
 import { RoomModule } from './module/room/room.module';
 import { HotelModule } from './module/hotel/hotel.module';
 import { HotelLocationModule } from './module/hotel_location/hotel_location.module';
+import { RatingModule } from './module/rating/rating.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { HotelLocationModule } from './module/hotel_location/hotel_location.modu
     RoomModule,
     HotelModule,
     HotelLocationModule,
+    RatingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

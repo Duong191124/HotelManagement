@@ -2,8 +2,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus
 import { PermissionService } from './permission.service';
 import { AuthGuard } from '../auth/guard/auth.guard';
 import { CreatePermissionDto } from './dto/create-permission.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('permission')
+@ApiBearerAuth()
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) { }
 
