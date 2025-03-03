@@ -1,0 +1,3 @@
+export enum EPaymentStatus {
+    UNPAID, PENDING, COMPLETED, FAILED, CANCELLED, REFUNDED
+}
