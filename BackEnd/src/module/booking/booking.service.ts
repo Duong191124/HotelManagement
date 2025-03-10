@@ -136,7 +136,7 @@ export class BookingService {
         }
     }
 
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    @Cron(CronExpression.EVERY_MINUTE)
     async autoUpdateRoomStatus() {
         const currentDate = moment().utc().format("YYYY-DD-MM HH:mm:ss");
 

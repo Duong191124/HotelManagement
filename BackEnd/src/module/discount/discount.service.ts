@@ -29,7 +29,7 @@ export class DiscountService {
         return await this.discountRepository.save(newDiscount);
     }
 
-    @Cron(CronExpression.EVERY_SECOND)
+    @Cron(CronExpression.EVERY_MINUTE)
     async checkMessageDiscountFollow() {
         const discountedRooms = await this.roomService.findDiscount();
         if (!discountedRooms.length) return;
