@@ -11,15 +11,11 @@ export class BookingEntity extends Extend {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({
-        type: 'timestamp',
-    })
-    check_in_date: Date;
+    @Column()
+    check_in_date: string;
 
-    @Column({
-        type: 'timestamp',
-    })
-    check_out_date: Date;
+    @Column()
+    check_out_date: string;
 
 
     @Column()

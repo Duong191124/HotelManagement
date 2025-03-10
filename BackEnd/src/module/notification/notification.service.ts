@@ -35,7 +35,8 @@ export class NotificationService {
         userId: number,
         roomNumber: number,
         hotelName: string,
-        bookingStatus: EBookingStatus,
+        bookingStatus?: EBookingStatus,
+        notification_type?: ENotificationType,
         customMessage?: string,
         titleMessage?: string
     ): Promise<string> {
@@ -45,13 +46,13 @@ export class NotificationService {
             throw new CustomizeException('user can not exist', 400);
         }
 
-        console.log(bookingStatus);
+        console.log(notification_type);
 
         let message = customMessage;
         let title = titleMessage;
         const notificationType = this.mapBookingStatusToNotificationType(bookingStatus);
         if (!message) {
-            switch (notificationType) {
+            switch (notification_type || notificationType) {
                 case ENotificationType.BOOKING_CONFIRMATION:
                     title = 'BOOKING_CONFIRMATION'
                     message = `Your booking room ${roomNumber} in ${hotelName} has been confirmed! 🎉`;
@@ -73,7 +74,7 @@ export class NotificationService {
                     message = 'TIME TO CHECK IN! 🏨';
                     break;
                 case ENotificationType.CHECK_OUT:
-                    title = 'BOOKING_PENDING'
+                    title = 'CHECK_OUT'
                     message = 'TIME TO CHECK OUT! 🏁';
                     break;
                 case ENotificationType.PAYMENT_SUCCESS:
@@ -84,6 +85,9 @@ export class NotificationService {
                     title = 'PAYMENT_FAILED'
                     message = `Your payment room ${roomNumber} in ${hotelName} was failed! ❌`;
                     break;
+                case ENotificationType.DISCOUNT:
+                    title = `DISCOUNT`
+                    message = `Your room ${roomNumber} in ${hotelName} has been discounted now!`
                 default:
                     title = 'MESSAGE'
                     message = 'You have a new notification!';
@@ -95,17 +99,17 @@ export class NotificationService {
             title,
             is_read: false,
             user,
-            notification_type: notificationType,
+            notification_type: notification_type,
         });
 
         await this.notificationRepository.save(notification);
 
-        this.notificationGateway.notifyUser(userId, message, notificationType);
+        this.notificationGateway.notifyUser(userId, message, notification_type ?? notificationType);
 
         return 'Notification sent successfully';
     }
 
-    private mapBookingStatusToNotificationType(status: EBookingStatus): ENotificationType {
+    private mapBookingStatusToNotificationType(status?: EBookingStatus): ENotificationType {
         switch (status) {
             case EBookingStatus.BOOKING_REQUEST:
                 return ENotificationType.BOOKING_REQUEST;

@@ -1,7 +1,9 @@
-import { Column, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { EUser } from "../enum/user.enum";
 import { RoleEntity } from "./role.entity";
 import { Exclude } from "class-transformer";
+import { BookingEntity } from "./booking.entity";
+import { RoomEntity } from "./room.entity";
 
 @Entity()
 export class UserEntity {
@@ -34,4 +36,9 @@ export class UserEntity {
     })
     roles: RoleEntity[];
 
+    @OneToMany(() => BookingEntity, booking => booking.id)
+    booking: BookingEntity;
+
+    @OneToMany(() => RoomEntity, room => room.id)
+    room: RoomEntity;
 }

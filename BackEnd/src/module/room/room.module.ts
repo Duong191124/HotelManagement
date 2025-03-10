@@ -5,6 +5,7 @@ import { DatabaseModule } from 'src/common/database/database.module';
 import { roomProvider } from 'src/common/repository/room.provider';
 import { hotelLocationProvider } from 'src/common/repository/hotel_location.provider';
 import { imageProvider } from 'src/common/repository/image.provider';
+import { discountProvider } from 'src/common/repository/discount.provider';
 
 @Module({
   imports: [DatabaseModule],
@@ -13,7 +14,8 @@ import { imageProvider } from 'src/common/repository/image.provider';
     RoomService,
     ...roomProvider,
     ...hotelLocationProvider,
-    ...imageProvider
+    ...imageProvider,
+    ...discountProvider
   ],
   exports: [RoomService]
 })

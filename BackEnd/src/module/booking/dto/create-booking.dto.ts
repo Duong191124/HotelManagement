@@ -7,21 +7,10 @@ import * as moment from 'moment-timezone';
 
 export class CreatedBookingDTO {
     @ApiProperty()
-    @IsNotEmpty()
-    @Type(() => Date)
-    @Transform(({ value }) => moment(value, 'DD/MM/YYYY HH:mm:ss').tz('UTC').toDate())
-    @IsDate()
-    check_in_date: Date;
+    check_in_date: string;
 
     @ApiProperty()
-    @IsNotEmpty()
-    @Type(() => Date)
-    @Transform(({ value }) => moment(value, 'DD/MM/YYYY HH:mm:ss').tz('UTC').toDate())
-    @IsDate()
-    check_out_date: Date;
-
-    @ApiProperty()
-    total_price: number;
+    check_out_date: string;
 
     @ApiProperty()
     room_id: number;
