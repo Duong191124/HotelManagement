@@ -24,5 +24,4 @@ export class BookingController {
   async updateBooking(@Param('id') bookingId: number) {
     return this.bookingService.updateBookingRoom(bookingId);
   }
-
 }

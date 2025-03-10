@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { BookingEntity } from 'src/common/shared/entities/booking.entity';
-import { LessThan, Repository } from 'typeorm';
+import { LessThan, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { NotificationService } from '../notification/notification.service';
 import { CreatedBookingDTO } from './dto/create-booking.dto';
 import { UserEntity } from 'src/common/shared/entities/user.entity';
@@ -10,6 +10,7 @@ import { EBookingStatus } from 'src/common/shared/enum/booking_status.enum';
 import * as moment from 'moment';
 import { ERoomStatus } from 'src/common/shared/enum/room_status.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ENotificationType } from 'src/common/shared/enum/notification_type.enum';
 
 @Injectable()
 export class BookingService {
@@ -26,30 +27,77 @@ export class BookingService {
     ) { }
 
     async bookingRoom(body: CreatedBookingDTO) {
-        const findUserId = await this.userRepository.findOne({ where: { id: body.user_id } });
-        const findRoomId = await this.roomRepository.findOne({ where: { id: body.room_id } });
-        if (!findUserId || !findRoomId) {
-            throw new CustomizeException(`Can not find this roomId ${findRoomId} or this userId ${findUserId}`, 400);
+        const { user_id, room_id, check_in_date, check_out_date } = body;
+
+        // Kiểm tra người dùng có tồn tại không
+        const user = await this.userRepository.findOne({ where: { id: user_id } });
+        if (!user) {
+            throw new CustomizeException(`User with ID ${user_id} not found`, 400);
         }
-        const booking = await this.bookingRepository.find({
-            where: {
-                room: { id: body.room_id },
-            },
-            relations: ['room', 'room.hotel_location', 'room.hotel_location.hotel']
+
+        // Kiểm tra phòng có tồn tại không
+        const room = await this.roomRepository.findOne({
+            where: { id: room_id },
+            relations: ['hotel_location', 'hotel_location.hotel']
         });
-        if (booking.some(t => t.room.room_status === ERoomStatus.NOT_AVAILABLE)) {
-            throw new CustomizeException('This room is reserved', 400);
+        if (!room) {
+            throw new CustomizeException(`Room with ID ${room_id} not found`, 400);
         }
+
+        // Kiểm tra ngày hợp lệ
+        const checkIn = moment(check_in_date, 'DD-MM-YYYY HH:mm:ss', true);
+        const checkOut = moment(check_out_date, 'DD-MM-YYYY HH:mm:ss', true);
+
+        if (!checkIn.isValid() || !checkOut.isValid()) {
+            throw new CustomizeException('Invalid date format. Expected DD-MM-YYYY HH:mm:ss', 400);
+        }
+
+        if (checkIn.isAfter(checkOut)) {
+            throw new CustomizeException('Check-in date must be before check-out date', 400);
+        }
+
+        // Kiểm tra xem phòng đã bị đặt trước đó chưa
+        const conflictingBooking = await this.bookingRepository.findOne({
+            where: {
+                room: { id: room_id },
+                check_in_date: LessThanOrEqual(check_out_date),
+                check_out_date: MoreThanOrEqual(check_in_date),
+            }
+        });
+
+        if (conflictingBooking) {
+            throw new CustomizeException('This room is already booked for the selected dates', 400);
+        }
+
+        // Tính tổng giá tiền
+        if (!room.price_per_night) {
+            throw new CustomizeException('Room price is not available', 400);
+        }
+
+        const nights = checkOut.diff(checkIn, 'days');
+        const total_price = nights * room.price_per_night;
+
+        // Lưu thông tin đặt phòng
         const newBooking = this.bookingRepository.create({
-            ...body,
-            user: findUserId,
-            room: findRoomId
-        })
+            check_in_date: checkIn.format('YYYY-MM-DD HH:mm:ss'),
+            check_out_date: checkOut.format('YYYY-MM-DD HH:mm:ss'),
+            user,
+            room,
+            total_price
+        });
+
         await this.bookingRepository.save(newBooking);
-        const roomNumber = booking.map(t => t.room.room_number);
-        const hotelName = booking.map(t => t.room.hotel_location.hotel.name);
-        return await this.notificationService.sendNotification(body.user_id, roomNumber[0], hotelName[0], 0);
+
+        // Gửi thông báo đến người dùng
+        return await this.notificationService.sendNotification(
+            user_id,
+            room.room_number,
+            room.hotel_location.hotel.name,
+            total_price
+        );
     }
+
+
 
     async updateBookingRoom(bookingId: number) {
         const booking = await this.bookingRepository.findOne({
@@ -88,9 +136,9 @@ export class BookingService {
         }
     }
 
-    @Cron(CronExpression.EVERY_10_SECONDS)
+    @Cron(CronExpression.EVERY_MINUTE)
     async autoUpdateRoomStatus() {
-        const currentDate = new Date();
+        const currentDate = moment().utc().format("YYYY-DD-MM HH:mm:ss");
 
         const expiredBookings = await this.bookingRepository.find({
             where: {
@@ -110,6 +158,45 @@ export class BookingService {
                 booking.is_expired = true;
                 await this.roomRepository.save(booking.room);
                 await this.bookingRepository.save(booking);
+            }
+        }
+    }
+
+    @Cron(CronExpression.EVERY_SECOND)
+    async checkInAndOut() {
+        const today = moment().add(7, 'hours').utc().format("YYYY-DD-MM HH:mm:ss");
+
+        const bookings = await this.bookingRepository.find({
+            where: [
+                { check_in_date: today },
+                { check_out_date: today },
+            ],
+            relations: ['user', 'room', 'room.hotel_location', 'room.hotel_location.hotel'],
+        });
+
+        for (const booking of bookings) {
+            const { user, check_in_date, check_out_date } = booking;
+            console.log(booking);
+            if (!user) continue;
+
+            if (moment(check_in_date).isSame(today)) {
+                await this.notificationService.sendNotification(
+                    user.id,
+                    booking.room.room_number,
+                    booking.room.hotel_location.hotel.name,
+                    undefined,
+                    ENotificationType.CHECK_IN
+                );
+            }
+
+            if (moment(check_out_date).isSame(today)) {
+                await this.notificationService.sendNotification(
+                    user.id,
+                    booking.room.room_number,
+                    booking.room.hotel_location.hotel.name,
+                    undefined,
+                    ENotificationType.CHECK_OUT
+                );
             }
         }
     }
